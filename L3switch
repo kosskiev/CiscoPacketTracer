@@ -1,0 +1,64 @@
+# пример настройки сети в котором 4 компа подключены к 2 коммутаторам(2 уровня) и они уже подключены к комутатору(3 уровня)
+# сначала настроим коммутаторы 2 уровня
+# переходим в CLI и настраиваем 2 порта 1 под vlan2 и второй под vlan3
+en
+conf t 
+int fa0/1
+switchport mode access 
+switchport access vlan 2
+end
+
+en
+conf t 
+int fa0/2
+switchport mode access 
+switchport access vlan 3
+end
+
+# теперь настраиваем  trunk порт от данного комутатора(второго уровня) до центрального коммутатора(3 уровня) - между собой соеденены гигабитными портами
+en
+conf t 
+int gigabitEthernet 0/1
+switchport mode trunk 
+switchport trunk allowed vlan 2,3
+end
+wr mem
+
+# теперь переходим к настройке L3 коммутатора на 0/1 порту и аналогичные действия на 0/2 порту
+en
+conf t
+# 0/1 порт
+int gigabitEthernet 0/1
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+switchport trunk allowed vlan 2,3
+exit
+# 0/2 порт
+int gigabitEthernet 0/2
+switchport trunk encapsulation dot1q 
+switchport mode trunk 
+switchport trunk allowed vlan 2,3
+
+vlan2
+name VLAN2
+exit
+vlan3
+name VLAN3
+exit
+end
+wr mem
+
+# и теперь на созданные нами интерфейсы повесим ip адресса
+int vlan 2
+ip address 2.2.2.1 255.255.255.0
+int vlan 3
+ip address 3.3.3.1 255.255.255.0
+ip routing 
+end
+wr mem
+
+# переходим на каждый комп и вешаем ip адреса
+# на vlan2 вешаю ip адрес 2.2.2.2 255.255.255.0 и gateway 2.2.2.1
+# на vlan3 вешаю ip адрес 3.3.3.2 255.255.255.0 и gateway 3.3.3.1
+# все остальные компы по аналогии прописывать IP
+
